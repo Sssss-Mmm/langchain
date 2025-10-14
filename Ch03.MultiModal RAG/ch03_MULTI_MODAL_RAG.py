@@ -115,4 +115,136 @@ for img_base64 in img_base64_list:
     summary = image_summarize(img_base64)
     image_summaries.append(summary)
 
-print(image_summaries[0])
+# print(image_summaries[0])
+
+from langchain.retrievers import MultiVectorRetriever
+from langchain_core.stores import InMemoryStore
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+
+# 분할한 텍스트들을 색인할 벡터 저장조
+vectorstore = Chroma(collection_name="multi_modal_rag",embedding_function=OpenAIEmbeddings())
+
+# 원본 문서 저장을 위한 저장소 선언
+docstore = InMemoryStore()
+id_key = "doc_id"
+
+# 검색기
+retriever = MultiVectorRetriever(
+    vectorstore = vectorstore,
+    docstore= docstore,
+    id_key=id_key
+)
+
+import uuid
+# 원본 텍스트 데이터 저장
+doc_ids = [str(uuid.uuid4()) for _ in texts]
+retriever.docstore.mset(list(zip(doc_ids, texts)))
+
+# 원본 테이블 데이터 저장
+table_ids = [str(uuid.uuid4()) for _ in tables]
+retriever.docstore.mset(list(zip(table_ids, tables)))
+
+# 원본 이미지(base64) 데이터 저장
+img_ids = [str(uuid.uuid4()) for _ in img_base64_list]
+retriever.docstore.mset(list(zip(img_ids, img_base64_list)))
+
+from langchain.schema.document import Document
+
+# 텍스트 요약 벡터 저장
+summary_texts = [
+    Document(page_content=s,metadata={id_key: doc_ids[i]})
+    for i , s in enumerate(text_summaries)
+]
+retriever.vectorstore.add_documents(summary_texts)
+
+# 테이블 요약 벡터 저장
+summary_tables = [
+    Document(page_content=s,metadata={id_key: table_ids[i]})
+    for i , s in enumerate(table_summaries)
+]
+retriever.vectorstore.add_documents(summary_tables)
+
+# 이미지 요약 벡터 저장
+summary_img = [
+    Document(page_content=s,metadata={id_key: img_ids[i]})
+    for i , s in enumerate(image_summaries)
+]
+retriever.vectorstore.add_documents(summary_img)
+
+docs = retriever.invoke(
+    "말라리아 군집 사례는 어떤가요?"
+)
+
+print(len(docs))
+
+from base64 import b64decode
+
+def split_image_text_types(docs):
+    # 이미지와 텍스트 데이터를 분리
+    b64 = []
+    text = []
+    for doc in docs:
+        try:
+            b64decode(doc)
+            b64.append(doc)
+        except Exception as e:
+            text.append(doc)
+    return {
+        "images": b64,
+        "texts": text
+    }
+
+docs_by_type = split_image_text_types(docs)
+
+print(len(docs_by_type["images"]))
+
+print(docs_by_type["images"][0][:100])
+print(docs_by_type["texts"])
+
+from IPython.display import display, HTML
+
+def plt_img_base64(img_base64):
+    # base64 이미지로 html 태그를 작성
+    image_html = f'<img src="data:image/jpeg;base64,{img_base64}'
+
+    # html 태그를 기반으로 이미지를 표기
+    display(HTML(image_html))
+
+plt_img_base64(docs_by_type["images"][0])
+
+from operator import itemgetter
+from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
+
+def prompt_func(dict):
+    format_texts = "\n".join(dict["context"]["texts"])
+    text = f"""
+    다음 문맥에만 기반하여 질문에 답하세요. 문맥에는 텍스트, 표, 그리고 아래 이미지가 포함될 수 있습니다:
+    질문: {dict["question"]}
+
+    텍스트와 표:
+    {format_texts}
+    """
+
+    prompt = [
+        HumanMessage(
+            content=[
+                {"type":"text","text":text},
+                {"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{dict['context']['images'][0]}"}}
+            ]
+        )
+    ]
+
+    return prompt
+
+model =ChatOpenAI(temperature=0,model="gpt-4o",max_tokens=1024)
+
+# RAG 파이프라인
+chain = (
+    {"context": retriever | RunnableLambda(split_image_text_types),"question":RunnablePassthrough()}
+    | RunnableLambda(prompt_func)
+    | model
+    | StrOutputParser()
+)
+
+print(chain.invoke("말라리아 군집 사례는 어떤가요?"))
