@@ -11,7 +11,7 @@ file_path = ("./Data/투자설명서.pdf")
 
 loader = PyPDFLoader(file_path)
 
-doc_splitter = RecursiveCharacterTextSplitter(chunk_size = 200, chunk_overlap = 20)
+doc_splitter = RecursiveCharacterTextSplitter(chunk_size = 2000, chunk_overlap = 200)
 docs = loader.load_and_split(doc_splitter)
 
 from langchain_openai import OpenAIEmbeddings
@@ -19,8 +19,18 @@ from langchain_openai import OpenAIEmbeddings
 embedding = OpenAIEmbeddings(model="text-embedding-3-large")
 
 from langchain_community.vectorstores import FAISS
+from tqdm import tqdm
+batch_size = 20
+faiss_store = None
 
-faiss_store = FAISS.from_documents(docs,embedding)
+for i in tqdm(range(0, len(docs), batch_size)):
+    batch = docs[i:i + batch_size]
+    temp_store = FAISS.from_documents(batch, embedding)
+
+    if i == 0:
+        faiss_store = temp_store
+    else:
+        faiss_store.merge_from(temp_store)
 
 persist_directory = "./DB"
 faiss_store.save_local(persist_directory)
