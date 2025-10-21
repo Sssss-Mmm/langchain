@@ -55,7 +55,7 @@ qa_chain = RetrievalQA.from_chain_type(
     llm  = ChatOpenAI(temperature=0.2, model="gpt-4o"),
     chain_type = "stuff",
     retriever = ensemble_retriever,
-    return_source_documents = True
+    return_source_documents = False
 )
 
 print(qa_chain.invoke("이 회사가 발행한 주식의 총 발행량이 어느정도야?"))
