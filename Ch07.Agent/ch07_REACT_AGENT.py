@@ -128,12 +128,12 @@ react_agent = create_react_agent(llm, tools=tools, prompt=prompt)
 
 react_agent_executor = AgentExecutor(agent=react_agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
-# result = react_agent_executor.invoke({"input": "한국과 미국의 ICT 기관 협력 사례"})
+result = react_agent_executor.invoke({"input": "한국과 미국의 ICT 기관 협력 사례"})
 
-# print(result['output'])
+print(result['output'])
 
 # 멀티 쿼리
-# result = react_agent_executor.invoke({"input": "미국과 일본의 ICT 주요 정책의 공통점과 차이점을 설명해줘."})
+result = react_agent_executor.invoke({"input": "미국과 일본의 ICT 주요 정책의 공통점과 차이점을 설명해줘."})
 
 result = react_agent_executor.invoke({"input": "미국의 ICT 관련 정부 기구, 주요 법령, 국내 기업 진출 사례 각각 따로 검색해. 그렇게 해서 정보 좀 모아봐. 그리고 나서 일본의 AI 정책도 알려줘."})
 
