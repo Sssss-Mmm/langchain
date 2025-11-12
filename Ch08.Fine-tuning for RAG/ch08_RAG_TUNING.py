@@ -96,3 +96,20 @@ train_dataset = Dataset.from_list(train_dataset)
 test_dataset = Dataset.from_list(test_dataset)
 print(type(train_dataset))
 print(type(test_dataset))
+
+# 허깅페이스 모델 이름
+model_id = "Qwen/Qwen2-7B-Instruct" 
+
+# 모델과 토크나이저 로드
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map = "auto",
+    torch_dtype = torch.bfloat16,
+)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# 템플릿 적용
+text = tokenizer.apply_chat_template(
+    train_dataset[0]["messages"], tokenize=False , add_generation_prompt=False
+)
+print(text)
