@@ -3,6 +3,7 @@ import requests
 
 from dotenv import load_dotenv
 
+# LangChain imports
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -17,11 +18,13 @@ load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
 
+# PDF 파일 다운로드
 urls = [
    "https://raw.githubusercontent.com/llama-index-tutorial/llama-index-tutorial/main/ch06/ict_japan_2024.pdf",
    "https://raw.githubusercontent.com/llama-index-tutorial/llama-index-tutorial/main/ch06/ict_usa_2024.pdf"
 ]
 
+# PDF 파일 다운로드
 for url in urls :
     filename = url.split("/")[-1]
     response = requests.get(url)
@@ -33,6 +36,7 @@ for url in urls :
 # 임베딩 설정
 embd = OpenAIEmbeddings()
 
+# PDF 리트리버 생성 함수
 def create_pdf_retriever(
     pdf_path: str,
     persist_directory: str,
@@ -75,6 +79,7 @@ retriever_usa = create_pdf_retriever(
     embedding_model=embd
 )
 
+# 리트리버 도구 생성
 jp_engine = create_retriever_tool(
     retriever=retriever_japan,
     name="japan_ict",
@@ -86,9 +91,10 @@ usa_engine = create_retriever_tool(
     name="usa_ict",
     description="미국의 ICT 시장동향 정보를 제공합니다. 미국 ICT와 관련된 질문은 해당 도구를 사용하세요"
 )
-
+# 리트리버 도구 리스트
 tools = [jp_engine,usa_engine]
 
+# REACT 에이전트 프롬프트 불러오기
 prompt_react = hub.pull("hwchase17/react")
 print(prompt_react.template)
 print('--프롬프트 끝--')
@@ -124,10 +130,13 @@ prompt = PromptTemplate.from_template(template)
 
 llm = ChatOpenAI(model="gpt-4o-mini",temperature=0)
 
+# REACT 에이전트 생성
 react_agent = create_react_agent(llm, tools=tools, prompt=prompt)
 
+# REACT 에이전트 실행기 생성
 react_agent_executor = AgentExecutor(agent=react_agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
+# 단일 쿼리
 result = react_agent_executor.invoke({"input": "한국과 미국의 ICT 기관 협력 사례"})
 
 print(result['output'])

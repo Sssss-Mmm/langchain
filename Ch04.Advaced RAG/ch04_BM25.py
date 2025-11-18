@@ -8,6 +8,7 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+# PDF 문서 로드 및 분할
 file_path = ("./Data/투자설명서.pdf")
 loader = PyPDFLoader(file_path)
 
@@ -20,6 +21,7 @@ from kiwipiepy import Kiwi
 
 kiwi_tokenizer = Kiwi()
 
+# 한국어 토크나이저 함수 정의
 def kiwi_tokenize(text):
     return [token.form for token in kiwi_tokenizer.tokenize(text)]
 
