@@ -18,7 +18,7 @@ from typing import List
 # 기본 오픈AI 클라이언트 사용
 client = OpenAI(api_key=api_key)
 
-# # "안녕" 메세지를 보내고 응답을 받음
+# "안녕" 메세지를 보내고 응답을 받음
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[

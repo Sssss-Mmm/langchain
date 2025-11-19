@@ -80,7 +80,6 @@ except Exception as e:
 
 
 # <SimpleJsonOutputParser 출력 파서 예시>
-
 from langchain.output_parsers.json import SimpleJsonOutputParser
 # JSON 포맷의 응답을 생성하는 프롬프트 템플릿 설정
 json_prompt = PromptTemplate.from_template(
@@ -93,13 +92,11 @@ json_chain = json_prompt | model | json_parser
 # print(list(json_chain.stream({"question":"비트코인에 대한 짧은 한문장 설명."})))
 
 # <JsonOutputParser 출력 파서 예시>
-
 class FinancialAdvice(BaseModel):
     setup : str = Field(description="금융 조언 상황을 설정하기 위한 질문")
     advice : str = Field(description="질문을 해결하기 위한 금융 답변")
 
 # JSON 출력 파서 설정 및 프롬프트 템플릿에 지침 삽입
-
 parser = JsonOutputParser(pydantic_object=FinancialAdvice)
 prompt = PromptTemplate(
     template="다음 금융 관련 질문에 답변해 주세요.\n{format_instructions}\n{query}\n",

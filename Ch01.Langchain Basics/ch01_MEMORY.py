@@ -74,7 +74,6 @@ chat_history =ChatMessageHistory()
 chain = prompt | chat
 
 # RunnableWithMessageHistory 클래스를 사용해 체인을 감쌉니다.
-
 chain_with_message_history = RunnableWithMessageHistory(
     chain,
     lambda session_id: chat_history, # 세선 ID에 따라 대화 이력을 불러오는 함수
@@ -99,11 +98,9 @@ from langchain_core.runnables import RunnablePassthrough
 from operator import itemgetter
 
 # 메시지 트리밍 유틸리티 설정
-
 trimmer = trim_messages(strategy="last",max_tokens=2, token_counter=len)
 
 # 트리밍된 대화 이력과 함께 체인 실행
-
 chain_with_trimming = (
     RunnablePassthrough.assign(chat_history=itemgetter("chat_history")| trimmer)
     | prompt
@@ -111,7 +108,6 @@ chain_with_trimming = (
 )
 
 # 트리밍된 대화 이력을 사용하는 체인 설정
-
 chain_with_trimmed_history = RunnableWithMessageHistory(
     chain_with_trimming,
     lambda session_id: chat_history,
