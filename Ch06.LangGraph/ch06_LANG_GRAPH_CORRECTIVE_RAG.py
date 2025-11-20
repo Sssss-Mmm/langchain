@@ -107,7 +107,7 @@ generation = rag_chain.invoke(
     {"context": format_docs(docs), "question": question}
 )
 # 생성된 답변 출력
-# print(generation)
+print(generation)
 
 # LLM이 입력된 질문을 웹검색에 적합한 형태로 변형하도록 지시하는 프롬프트를 정의합니다
 system = """당신은 입력된 질문을 변형하여 웹 검색에 최적화된 형태로 만드는 질문생성기입니다.
@@ -128,18 +128,20 @@ re_write_prompt = ChatPromptTemplate.from_messages(
 question_rewriter = re_write_prompt | llm | StrOutputParser()
 
 question = "C++ 깔끔하게 짜고싶다"
-# print(question_rewriter.invoke({"question": question}))
+print(question_rewriter.invoke({"question": question}))
 
 
 
 web_search_tool = TavilySearchResults(k=3)
 
+# 그래프 상태 정의
 class GraphState(TypedDict):
     question: str
     generation: str
     web_search: str
     documents : List[str]
 
+# rag 체인을 사용하여 답변을 생성하는 노드
 def retrieve(state):
     """
     문서를 검색합니다.
@@ -156,6 +158,7 @@ def retrieve(state):
     documents = retriever.invoke(question)
     return {"documents":documents, "question":question}
 
+# rag 체인을 사용하여 답변을 생성하는 노드
 def generate(state):
     """
     답변을 생성합니다
@@ -172,7 +175,7 @@ def generate(state):
 
     generation = rag_chain.invoke({"context": documents, "question": question})
     return {"documents": documents, "question": question, "generation": generation}
-
+# 문서의 연관성을 평가하는 노드
 def grade_documents(state):
     """
     검색된 문서가 질문과 연관이 있는지 평가합니다.
@@ -202,7 +205,7 @@ def grade_documents(state):
             web_search = "예"
             continue
     return {"documents": filtered_docs, "question":question, "web_search":web_search}
-
+# 질문을 변환하는 노드
 def transform_query(state):
     """
     질문을 더 적합한 형태로 변환합니다
@@ -219,7 +222,7 @@ def transform_query(state):
 
     better_question = question_rewriter.invoke({"question":question})
     return {"documents":documents,"question":better_question}
-
+# 웹 검색을 수행하는 노드
 def web_search(state):
     """
     웹 검색을 수행합니다
@@ -241,7 +244,7 @@ def web_search(state):
     documents.append(web_results)
 
     return {"documents":documents,"question":question}
-
+# 결정 노드
 def decide_to_generate(state):
     """
     답변을 생성할지, 질문을 재 생성할지 결정합니다.
