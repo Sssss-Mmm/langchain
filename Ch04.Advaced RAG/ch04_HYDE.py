@@ -71,12 +71,14 @@ def create_final_response_chain():
     final_llm = ChatOpenAI(model="gpt-4o",temperature=0.2)
     return final_prompt | final_llm
 
+# 디버깅을 위한 입출력 프린트 함수
 def print_input_output(input_data, output_data, step_name):
     print(f"\n--- {step_name} ---")
     print(f"input: {input_data} ")
     print(f"output: {output_data} ")
     print("-" * 50)
 
+# 전체 파이프라인 생성 함수
 def create_pipeline_with_logging():
     virtual_doc_chain = create_virtual_doc_chain()
     retrieval_chain = create_retrieval_chain()

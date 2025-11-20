@@ -23,6 +23,7 @@ from tqdm import tqdm
 batch_size = 20
 faiss_store = None
 
+# 배치 단위로 FAISS 인덱스 생성 및 병합
 for i in tqdm(range(0, len(docs), batch_size)):
     batch = docs[i:i + batch_size]
     temp_store = FAISS.from_documents(batch, embedding)
@@ -35,6 +36,7 @@ for i in tqdm(range(0, len(docs), batch_size)):
 persist_directory = "./DB"
 faiss_store.save_local(persist_directory)
 
+# 저장된 DB 경로 지정 후 ,DB 로드
 vectordb = FAISS.load_local(persist_directory,embeddings=embedding,allow_dangerous_deserialization=True)
 
 from pydantic import BaseModel, Field
@@ -45,9 +47,11 @@ from langchain_openai import ChatOpenAI
 from textwrap import dedent
 from langchain_core.output_parsers import JsonOutputParser
 
+# 재순위화 점수용 Pydantic 모델 정의
 class RelevanceScore(BaseModel):
     relevance_score: float = Field(description="문서가 쿼리와 얼마나 관련이 있는지 나타내는 점수.")
 
+# 재순위화 함수 정의
 def reranking_documents(query:str, docs: List[Document], top_n: int = 2)-> List[Document]:
     parser = JsonOutputParser(pydantic_object=RelevanceScore)
     human_message_prompt = PromptTemplate(
@@ -100,20 +104,23 @@ for i, doc in enumerate(reranked_docs):
 from langchain_core.retrievers import BaseRetriever
 from langchain.chains import RetrievalQA
 
+# 커스텀 리트리버 정의
 class CustomRetriever(BaseRetriever):
     vectorstore : Any = Field(description="Retrieval을 위한 벡터스토어")
-
+    # Pydantic 설정
     class Config: 
         arbitrary_types_allowed = True
-    
+    # 재순위화된 문서 반환 메서드 재정의
     def get_relevant_documents(self, query: str, num_docs=2) -> List[Document]:
         initial_docs = self.vectorstore.similarity_search(query,k=4)
         return reranking_documents(query,initial_docs,top_n=num_docs)
     
+# 커스텀 리트리버 인스턴스 생성    
 custom_retriever = CustomRetriever(vectorstore=vectordb)
 
 llm = ChatOpenAI(temperature=0.2, model_name = "gpt-4o")
 
+# 관련있는 문서를 수집 후 , Chatgpt로 최종 답변까지 수행하는 체인을 생성
 qa_chain = RetrievalQA.from_chain_type(
     llm = llm,
     chain_type = "stuff",

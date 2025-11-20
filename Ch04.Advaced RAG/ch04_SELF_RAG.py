@@ -31,10 +31,12 @@ from pydantic import BaseModel, Field
 from langchain.prompts import PromptTemplate
 from typing import Literal
 
+# 검색 필요유무 결정용 Pydantic 모델 정의
 class RetrievalResponse(BaseModel):
     Reasoning: str = Field(description="검색의 필요유무를 추론하는 과정(2~3문장 이내)")
     Retrieve: Literal['Yes','No'] = Field(description="검색 필요유무")
 
+# 검색 필요유무 결정 프롬프트 템플릿
 retrieval_prompt = PromptTemplate(
     input_variables=["query"],
     template = """
@@ -51,6 +53,7 @@ retrieval_prompt = PromptTemplate(
 llm = ChatOpenAI(model="gpt-4o",max_tokens=2000, temperature = 0.2)
 retrieval_chain = retrieval_prompt | llm.with_structured_output(RetrievalResponse)
 
+# 관련성 평가용 Pydantic 모델 정의
 class RelevanceResponse(BaseModel):
     Reasoning : str = Field(description="연관문서의 관련성 평가 추론과정(2~3문장 이내)")
     ISREL : Literal['Relevant','Irrelevant']  = Field(description="관련성 평가 결과")
@@ -85,6 +88,7 @@ ISREL: [Irrelevant]
 llm = ChatOpenAI(model="gpt-4o",max_tokens= 2000, temperature=0.2)
 relevance_chain = relevance_prompt | llm.with_structured_output(RelevanceResponse)
 
+# 답변 생성용 Pydantic 모델 정의
 class GenerationResponse(BaseModel):
   response: str = Field(description="질문과 연관문서를 바탕으로 생성된 답변")
 
@@ -129,6 +133,7 @@ ISSUP: Fully supported
 # 각 단계에 대한 LLMChain 생성
 support_chain = support_prompt | llm.with_structured_output(SupportResponse)
 
+# 유용성 평가용 Pydantic 모델 정의
 class UtilityResponse(BaseModel):
     Reasoning: str = Field(description="응답의 유용성 평가 추론과정")
     ISUSE: Literal[1, 2, 3, 4, 5] = Field(description="응답의 유용성 평가결과")
@@ -171,7 +176,9 @@ llm = ChatOpenAI(model="gpt-4o", max_tokens=2000, temperature=0.2)
 # 각 단계에 대한 LLMChain 생성
 utility_chain = utility_prompt | llm.with_structured_output(UtilityResponse)
 
+# Self-RAG 클래스 정의
 class SelfRAG:
+    # 초기화 메서드
     def __init__(self, vectorstore, retrieval_chain, relevance_chain, generation_chain, support_chain, utility_chain, top_k):
         self.vectorstore = vectorstore
         self.retrieval_chain = retrieval_chain
@@ -181,6 +188,7 @@ class SelfRAG:
         self.utility_chain = utility_chain
         self.top_k = top_k
 
+    # 검색 필요유무 결정 메서드
     def determine_retrieval(self, query):
         print("\n1단계: 검색 필요 여부 결정 중...")
         input_data = {"query": query}
@@ -191,6 +199,7 @@ class SelfRAG:
         print(f"검색 결정: {retrieve_token}")
         return retrieve_token
 
+    # 문서 검색 메서드
     def retrieve_documents(self, query):
         print("\n2단계: 관련 문서 검색 중...")
         docs = self.vectorstore.similarity_search(query, k=self.top_k)
@@ -198,6 +207,7 @@ class SelfRAG:
         print(f"{len(contexts)}개의 문서를 검색했습니다")
         return contexts
 
+    # 문서 관련성 평가 메서드
     def evaluate_relevance(self, query, contexts):
         print("\n3단계: 문서의 관련성 평가 중...")
         relevant_contexts = []
@@ -213,6 +223,7 @@ class SelfRAG:
         print(f"관련된 컨텍스트 수: {len(relevant_contexts)}")
         return relevant_contexts
 
+    # 응답 생성 메서드
     def generate_responses(self, query, relevant_contexts):
         print("\n4단계: 관련 컨텍스트로 응답 생성 중...")
         responses = []
@@ -223,11 +234,13 @@ class SelfRAG:
             responses.append(response)
         return responses
 
+    # 검색 없이 응답 생성 메서드
     def generate_without_retrieval(self, query):
         input_data = {"query": query, "context": "관련된 컨텍스트를 찾지 못했습니다."}
         response = self.generation_chain.invoke(input_data).response
         return response
 
+    # 지원 평가 및 유용성 평가 메서드
     def assess_and_evaluate(self, query, responses, relevant_contexts):
         assessed_responses = []
         for i, (response, context) in enumerate(zip(responses, relevant_contexts)):
@@ -251,6 +264,7 @@ class SelfRAG:
             assessed_responses.append((response, support_token, utility_token))
         return assessed_responses
 
+    # 최고의 응답 선택 메서드
     def select_best_response(self, responses):
         print("\n최고의 응답 선택 중...")
 
@@ -273,7 +287,7 @@ class SelfRAG:
         print(f"선택된 응답의 지원 상태: {best_response[1]}, 유용성 점수: {best_response[2]}")
         return best_response
 
-
+    # 쿼리 처리 메서드
     def process_query(self, query):
         print(f"\n쿼리 처리 중: {query}")
 
@@ -305,7 +319,8 @@ class SelfRAG:
             # 검색 없이 생성
             print("검색 없이 생성합니다...")
             return self.generate_without_retrieval(query)
-        
+
+# Self-RAG 인스턴스 생성        
 self_rag_instance = SelfRAG(
     vectorstore = vectordb,
     retrieval_chain = retrieval_chain,

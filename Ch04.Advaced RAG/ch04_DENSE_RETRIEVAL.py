@@ -37,6 +37,7 @@ faiss_retriever = vectordb.as_retriever(search_kwargs = {"k":2})
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain_openai import ChatOpenAI
 
+# 관련있는 문서를 수집 후 , Chatgpt로 최종 답변까지 수행하는 체인을 생성
 qa_chain = RetrievalQA.from_chain_type(
     llm = ChatOpenAI(temperature=0.2,model="gpt-4o"),
     chain_type = "stuff",

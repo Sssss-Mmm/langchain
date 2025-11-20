@@ -19,8 +19,10 @@ docs = loader.load_and_split(doc_splitter)
 from langchain_community.retrievers import BM25Retriever
 from kiwipiepy import Kiwi
 
+# 한국어 토크나이저 설정
 kiwi_tokenizer = Kiwi()
 
+# 한국어 토크나이저 함수 정의
 def kiwi_tokenize(text):
     return [token.form for token in kiwi_tokenizer.tokenize(text)]
 
@@ -34,6 +36,7 @@ embedding = OpenAIEmbeddings(model = "text-embedding-3-large")
 
 from langchain_community.vectorstores import FAISS
 
+# FAISS DB 생성 후 저장
 faiss_store = FAISS.from_documents(docs,embedding)
 faiss_store.save_local("./DB")
 
@@ -44,6 +47,7 @@ faiss_retriever = vectordb.as_retriever(search_kwargs = {"k":4})
 
 from langchain.retrievers import EnsembleRetriever
 
+# EnsembleRetriever 생성
 ensemble_retriever = EnsembleRetriever(
     retrievers=[bm25_retriever,faiss_retriever], weights=[0.5,0.5]
 )
@@ -51,6 +55,7 @@ ensemble_retriever = EnsembleRetriever(
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain_openai import ChatOpenAI
 
+# 관련있는 문서를 수집 후 , Chatgpt로 최종 답변까지 수행하는 체인을 생성
 qa_chain = RetrievalQA.from_chain_type(
     llm  = ChatOpenAI(temperature=0.2, model="gpt-4o"),
     chain_type = "stuff",

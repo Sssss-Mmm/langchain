@@ -39,15 +39,18 @@ from langchain.chains import RetrievalQA
 
 crossencoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
 
+# 크로스 인코더 기반 리트리버 정의
 class Retriever_with_cross_encoder(BaseRetriever):
     vectorstore : Any = Field(description="초기 검색을 위한 벡터 저장소")
     crossencoder : Any = Field(description="재순위화를 위한 크로스 인코더 모델")
     k : int = Field(default=5,description="초기에 검색할 문서 수")
     rerank_top_k : int = Field(default=2 ,description="재순위화 후 최종적으로 반환할 문서 수")
-
+    
+    # Pydantic 설정
     class Config :
         arbitrary_types_allowed = True
     
+    # 크로스 인코더를 사용한 문서 검색 메서드 재정의
     def get_relevant_documents(self, query:str) -> List[Document]:
         init_docs = self.vectorstore.similarity_search(query, k=self.k)
 
@@ -59,6 +62,7 @@ class Retriever_with_cross_encoder(BaseRetriever):
 
         return [doc for doc, _ in scored_docs[:self.rerank_top_k]]
 
+# 크로스 인코더 기반 리트리버 생성
 cross_encode_retriever = Retriever_with_cross_encoder(
     vectorstore= vectordb,
     crossencoder=crossencoder,
@@ -68,6 +72,7 @@ cross_encode_retriever = Retriever_with_cross_encoder(
 
 llm =ChatOpenAI(temperature=0.2, model_name="gpt-4o")
 
+# 관련있는 문서를 수집 후 , Chatgpt로 최종 답변까지 수행하는 체인을 생성
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     chain_type="stuff",
@@ -82,6 +87,7 @@ print(f"\n질문: {query}")
 print(f"답변: {result['result']}")
 print("\n답변 근거 문서:")
 
+# 답변에 사용된 문서 출력
 for i, doc in enumerate(result["source_documents"]):
     print(f"\nDocument {i+1}:")
     print(doc.page_content)

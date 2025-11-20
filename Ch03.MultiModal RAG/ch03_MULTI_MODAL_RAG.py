@@ -180,6 +180,7 @@ print(len(docs))
 
 from base64 import b64decode
 
+# 이미지와 텍스트 데이터를 분리하는 함수
 def split_image_text_types(docs):
     # 이미지와 텍스트 데이터를 분리
     b64 = []
@@ -204,6 +205,7 @@ print(docs_by_type["texts"])
 
 from IPython.display import display, HTML
 
+# base64 이미지 출력 함수
 def plt_img_base64(img_base64):
     # base64 이미지로 html 태그를 작성
     image_html = f'<img src="data:image/jpeg;base64,{img_base64}'
@@ -216,6 +218,7 @@ plt_img_base64(docs_by_type["images"][0])
 from operator import itemgetter
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 
+# 프롬프트 함수 정의
 def prompt_func(dict):
     format_texts = "\n".join(dict["context"]["texts"])
     text = f"""

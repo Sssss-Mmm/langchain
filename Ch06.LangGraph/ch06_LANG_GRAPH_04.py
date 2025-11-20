@@ -20,6 +20,7 @@ from langgraph.graph import StateGraph, START
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
+# 그래프 상태 정의
 class State(TypedDict):
     messages: Annotated[list,add_messages]
 
