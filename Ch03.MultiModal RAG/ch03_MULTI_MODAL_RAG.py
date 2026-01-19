@@ -117,7 +117,7 @@ for img_base64 in img_base64_list:
 
 # print(image_summaries[0])
 
-from langchain.retrievers.multi_vector import MultiVectorRetriever
+from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
 from langchain_core.stores import InMemoryStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -149,7 +149,7 @@ retriever.docstore.mset(list(zip(table_ids, tables)))
 img_ids = [str(uuid.uuid4()) for _ in img_base64_list]
 retriever.docstore.mset(list(zip(img_ids, img_base64_list)))
 
-from langchain.schema.document import Document
+from langchain_classic.schema.document import Document
 
 # 텍스트 요약 벡터 저장
 summary_texts = [
@@ -216,7 +216,7 @@ def plt_img_base64(img_base64):
 plt_img_base64(docs_by_type["images"][0])
 
 from operator import itemgetter
-from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
+from langchain_classic.schema.runnable import RunnablePassthrough, RunnableLambda
 
 # 프롬프트 함수 정의
 def prompt_func(dict):
