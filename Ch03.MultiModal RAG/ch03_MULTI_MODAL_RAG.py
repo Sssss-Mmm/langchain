@@ -117,7 +117,7 @@ for img_base64 in img_base64_list:
 
 # print(image_summaries[0])
 
-from langchain.retrievers import MultiVectorRetriever
+from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain_core.stores import InMemoryStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
