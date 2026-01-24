@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from typing import Optional
 
 from langchain_openai import ChatOpenAI
-# from langchain.agents import AgentExecutor, create_tool_calling_agent (Removed)
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
 
@@ -84,7 +83,16 @@ print(f"User: {query1}")
 
 # LangGraph Agent는 invoke 시 {"messages": [...]} 형태를 받습니다.
 result1 = agent_executor.invoke({"messages": [("user", query1)]})
-print(f"Agent: {result1['messages'][-1].content}")
+
+# 실행 과정 출력 (Tool 호출 확인)
+for msg in result1['messages']:
+    if hasattr(msg, "tool_calls") and len(msg.tool_calls) > 0:
+        for tool_call in msg.tool_calls:
+            print(f"  ▶ [Tool Call] {tool_call['name']}: {tool_call['args']}")
+    elif msg.type == "tool":
+        print(f"  ▷ [Tool Result] {str(msg.content)[:100]}...") # 내용이 길면 자름
+    elif msg.type == "ai" and not msg.tool_calls:
+        print(f"Agent: {msg.content}")
 
 # 시나리오 2: 정보를 조합하여 파일 생성
 print("\n[Case 2] 리포트 생성")
@@ -94,6 +102,15 @@ print(f"User: {query2}")
 # 이전 대화 내용을 포함하여 실행하려면 메시지를 누적해야 하지만, 
 # 여기서는 독립적인 실행으로 보여줍니다.
 result2 = agent_executor.invoke({"messages": [("user", query2)]})
-print(f"Agent: {result2['messages'][-1].content}")
+
+# 실행 과정 출력
+for msg in result2['messages']:
+    if hasattr(msg, "tool_calls") and len(msg.tool_calls) > 0:
+        for tool_call in msg.tool_calls:
+            print(f"  ▶ [Tool Call] {tool_call['name']}: {tool_call['args']}")
+    elif msg.type == "tool":
+        print(f"  ▷ [Tool Result] {str(msg.content)[:100]}...") 
+    elif msg.type == "ai" and not msg.tool_calls:
+        print(f"Agent: {msg.content}")
 
 print("\n--- 실습 완료: 각 단계별로 Agent가 어떤 도구를 호출했는지 확인해보세요! ---")
