@@ -33,4 +33,5 @@ dependencies = [
     "rank-bm25>=0.2.2",
     "faiss-cpu>=1.13.2",
     "sentence-transformers>=5.2.0",
+    "duckduckgo-search>=8.1.1",
 ]
