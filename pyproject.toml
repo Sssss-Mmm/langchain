@@ -37,4 +37,7 @@ dependencies = [
     "ddgs>=9.10.0",
     "youtube-transcript-api>=1.2.3",
     "pytube>=15.0.0",
+    "streamlit>=1.53.1",
+    "yt-dlp>=2025.12.8",
+    "pydub>=0.25.1",
 ]
