@@ -8,10 +8,15 @@ def generate_question_node(state: TutorState) -> dict:
     """
     topic = state.get("topic", "Python Basics")
     difficulty = state.get("difficulty", "Easy")
+    question_type = state.get("question_type", "conceptual")
     
-    print(f"\n[System] Generating new question... (Topic: {topic}, Level: {difficulty})")
+    print(f"\n[System] Generating new question... (Topic: {topic}, Level: {difficulty}, Type: {question_type})")
     
-    question = generate_question_chain.invoke({"topic": topic, "difficulty": difficulty})
+    question = generate_question_chain.invoke({
+        "topic": topic, 
+        "difficulty": difficulty,
+        "question_type": question_type
+    })
     
     # 문제 출제 시 초기화해야 할 상태들
     return {

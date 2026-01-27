@@ -7,12 +7,18 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0.2)
 
 # 2. 문제 생성 체인 (Question Generation)
 gen_system = """당신은 Python 코딩 튜터입니다.
-주어진 '주제(Topic)'와 '난이도(Difficulty)'에 맞는 코딩 퀴즈를 하나 만들어주세요.
-문제는 간결해야 하며, 정답 코드를 포함하지 마세요. 개념을 묻거나 짧은 코딩 과제를 내세요."""
+주어진 '주제(Topic)', '난이도(Difficulty)', '문제 유형(Question Type)'에 맞는 코딩 퀴즈를 하나 만들어주세요.
+
+문제 유형별지침:
+- conceptual: 주제에 대한 핵심 개념을 묻는 서술형/단답형 문제
+- coding: 간단한 기능을 구현하는 코딩 과제 (함수 작성 등)
+- debugging: 버그가 있는 코드를 제시하고 원인을 찾거나 수정하게 하는 문제
+
+문제는 간결해야 하며, 정답 코드를 포함하지 마세요. 사용자가 직접 풀 수 있도록 유도하세요."""
 
 gen_prompt = ChatPromptTemplate.from_messages([
     ("system", gen_system),
-    ("human", "주제: {topic}\n난이도: {difficulty}\n\n새로운 문제를 하나 출제해줘.")
+    ("human", "주제: {topic}\n난이도: {difficulty}\n문제 유형: {question_type}\n\n새로운 문제를 하나 출제해줘.")
 ])
 
 # 출력은 문제 텍스트 자체

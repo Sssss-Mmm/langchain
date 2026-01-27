@@ -29,3 +29,6 @@ class TutorState(TypedDict):
     
     # 마지막 평가 결과 ("Pass", "Fail")
     last_evaluation: Literal["Pass", "Fail", None]
+
+    # 문제 유형 ("conceptual", "coding", "debugging")
+    question_type: Literal["conceptual", "coding", "debugging"]

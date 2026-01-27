@@ -83,10 +83,22 @@ app = workflow.compile()
 if __name__ == "__main__":
     print("=== AI Python Tutor (종료: q) ===")
     
+    # 초기 설정 입력
+    print("설정을 입력하세요 (엔터 치면 기본값 사용)")
+    topic_input = input("주제 (기본: Python Basics): ").strip()
+    topic = topic_input if topic_input else "Python Basics"
+    
+    diff_input = input("난이도 (Easy/Medium/Hard, 기본: Easy): ").strip()
+    difficulty = diff_input if diff_input else "Easy"
+    
+    type_input = input("문제 유형 (conceptual/coding/debugging, 기본: conceptual): ").strip()
+    question_type = type_input if type_input else "conceptual"
+    
     # 초기 상태 설정
     state = {
-        "topic": "Python Dictionary",
-        "difficulty": "Easy",
+        "topic": topic,
+        "difficulty": difficulty,
+        "question_type": question_type,
         "messages": [],
         "attempt_count": 0,
         "question_solved": False
