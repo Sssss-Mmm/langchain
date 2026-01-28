@@ -91,7 +91,7 @@ if __name__ == "__main__":
     diff_input = input("난이도 (Easy/Medium/Hard, 기본: Easy): ").strip()
     difficulty = diff_input if diff_input else "Easy"
     
-    type_input = input("문제 유형 (conceptual/coding/debugging, 기본: conceptual): ").strip()
+    type_input = input("문제 유형 (conceptual/coding/debugging/multiple_choice, 기본: conceptual): ").strip()
     question_type = type_input if type_input else "conceptual"
     
     # 초기 상태 설정

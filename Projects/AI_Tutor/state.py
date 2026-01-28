@@ -30,5 +30,17 @@ class TutorState(TypedDict):
     # 마지막 평가 결과 ("Pass", "Fail")
     last_evaluation: Literal["Pass", "Fail", None]
 
-    # 문제 유형 ("conceptual", "coding", "debugging")
-    question_type: Literal["conceptual", "coding", "debugging"]
+    # 문제 유형 ("conceptual", "coding", "debugging", "multiple_choice")
+    question_type: Literal["conceptual", "coding", "debugging", "multiple_choice"]
+
+    # 객관식 문제 보기 (예: ["1. ~", "2. ~", ...]) - question_type이 "multiple_choice"일 때 사용
+    options: List[str]
+    
+    # 정답 (객관식 번호 또는 단답형 정답)
+    correct_answer: str
+    
+    # 해설
+    explanation: str
+
+    # 출처 파일명
+    source_file: str

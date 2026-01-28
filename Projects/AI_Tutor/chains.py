@@ -72,5 +72,73 @@ hint_prompt = ChatPromptTemplate.from_messages([
 사용자가 어려워하고 있습니다. 힌트를 하나 주세요.
 """)
 ])
-
 provide_hint_chain = hint_prompt | llm | StrOutputParser()
+
+import os
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.output_parsers import JsonOutputParser
+from pydantic import BaseModel, Field
+
+# 5.1 벡터 스토어 로드
+DB_PATH = os.path.join(os.path.dirname(__file__), "VectorStore")
+# DB가 존재하는지 확인
+if os.path.exists(DB_PATH):
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    vectorstore = FAISS.load_local(DB_PATH, embeddings, allow_dangerous_deserialization=True)
+    # 주제와 연관된 내용을 찾기 위해 검색기 설정 (랜덤성을 위해 k를 늘림)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 15})
+else:
+    vectorstore = None
+    retriever = None
+
+import random
+
+def get_random_documents(k=3):
+    """
+    벡터 스토어에서 랜덤하게 k개의 문서를 추출합니다.
+    """
+    if vectorstore is None:
+        return []
+        
+    # FAISS의 docstore는 InMemoryDocstore이며 _dict 속성에 문서가 저장됨
+    # 저장된 모든 문서 중 랜덤 샘플링
+    doc_ids = list(vectorstore.docstore._dict.keys())
+    if not doc_ids:
+        return []
+        
+    selected_ids = random.sample(doc_ids, min(len(doc_ids), k))
+    return [vectorstore.docstore.search(doc_id) for doc_id in selected_ids]
+
+# 5.2 출력 데이터 구조 정의
+class ExamQuestion(BaseModel):
+    question: str = Field(description="The question text")
+    options: list[str] = Field(description="List of 4 options, e.g. ['1. option A', '2. option B', ...]")
+    answer: str = Field(description="The correct answer, e.g. '1' or '2'")
+    explanation: str = Field(description="Detailed explanation of the answer")
+
+parser = JsonOutputParser(pydantic_object=ExamQuestion)
+
+# 5.3 프롬프트 및 체인 정의
+rag_system = """당신은 정보처리기사 필기 시험 문제 출제자입니다.
+제공된 [Context]를 바탕으로, 실제 시험에 나올법한 5지 선다형 객관식 문제를 하나 만들어주세요.
+반드시 JSON 형식으로 출력해야 하며, 다음 키를 포함하세요: 'question', 'options', 'answer', 'explanation'.
+Context 내용이 부족하면, 해당 주제(Topic)에 관한 일반적인 지식을 활용하여 문제를 만드세요."""
+
+rag_prompt = ChatPromptTemplate.from_messages([
+    ("system", rag_system),
+    ("human", """
+[Context]
+{context}
+
+[Topic]
+{topic}
+
+위 내용을 바탕으로 객관식 문제를 하나 출제해줘.
+FORMAT:
+{format_instructions}
+""")
+])
+
+# RAG 체인 호출 시: {"context": retrieved_docs, "topic": input_topic, "format_instructions": parser.get_format_instructions()}
+rag_question_chain = rag_prompt | llm | parser
