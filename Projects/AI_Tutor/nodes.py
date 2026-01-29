@@ -8,15 +8,16 @@ def generate_question_node(state: TutorState) -> dict:
     """
     # 사용자가 주제/난이도를 선택하지 않으므로 랜덤 모드로 동작
     # 기본값 설정
-    topic = "정보처리기사 필기" 
-    difficulty = "Random"
+    topic = state.get("topic", "정보처리기사 필기") 
+    difficulty = state.get("difficulty", "Random")
     question_type = state.get("question_type", "multiple_choice")
     
-    print(f"\n[System] Generating new question... (Topic: {topic}, Level: {difficulty}, Type: {question_type})")
+    print(f"\n[System] Generating new question... (Topic/Subject: {topic}, Level: {difficulty}, Type: {question_type})")
     
     if question_type == "multiple_choice":
-        # RAG 검색 (완전 랜덤)
-        selected_docs = get_random_documents(k=3)
+        # RAG 검색 (과목 필터링 포함)
+        # state['topic']에 '1.소프트웨어 설계' 등이 들어있으면 필터링됨
+        selected_docs = get_random_documents(k=3, subject=topic)
         
         if not selected_docs:
             # 문서가 없는 경우 fallback

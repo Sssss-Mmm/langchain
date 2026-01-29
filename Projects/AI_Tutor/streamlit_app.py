@@ -34,14 +34,20 @@ if "chat_history" not in st.session_state:
 with st.sidebar:
     st.header("⚙️ 학습 설정")
     
-    st.info("랜덤 모드로 동작합니다.\n다양한 기출문제가 무작위로 출제됩니다.")
+    st.info("과목을 선택하거나 랜덤으로 풀 수 있습니다.")
+    
+    selected_subject = st.selectbox(
+        "과목 선택",
+        ["Random", "1.소프트웨어 설계", "2.소프트웨어 개발", "3.데이터베이스 구축", "4.프로그래밍 언어 활용", "5.정보시스템 구축 관리"],
+        index=0
+    )
     
     st.markdown("---")
     
-    if st.button("🚀 새로운 문제 풀기 / 초기화", type="primary"):
+    if st.button("🚀 문제 풀기 / 초기화", type="primary"):
         # 상태 초기화
         st.session_state.tutor_state = {
-            "topic": "정보처리기사 필기", # 내부적으로만 사용
+            "topic": selected_subject, # 과목명을 topic으로 사용
             "difficulty": "Random",
             "question_type": "multiple_choice",
             "messages": [],

@@ -94,20 +94,40 @@ else:
 
 import random
 
-def get_random_documents(k=3):
+def get_random_documents(k=3, subject=None):
     """
     벡터 스토어에서 랜덤하게 k개의 문서를 추출합니다.
+    subject가 주어지면 해당 과목의 문서만 추출합니다.
     """
     if vectorstore is None:
         return []
-        
-    # FAISS의 docstore는 InMemoryDocstore이며 _dict 속성에 문서가 저장됨
-    # 저장된 모든 문서 중 랜덤 샘플링
+    
+    # docstore의 모든 문서 ID 가져오기
     doc_ids = list(vectorstore.docstore._dict.keys())
-    if not doc_ids:
+    
+    if subject and subject != "Random":
+        # 메타데이터 필터링
+        filtered_ids = []
+        for doc_id in doc_ids:
+            doc = vectorstore.docstore.search(doc_id)
+            # 메타데이터의 subject 필드 확인 (부분 일치 허용)
+            # ingest.py에서 "1.소프트웨어 설계" 등으로 저장함
+            # subject 인자는 "1.소프트웨어 설계" 와 같이 들어올 예정
+            doc_subject = doc.metadata.get('subject', 'Unknown')
+            if subject in doc_subject:
+                filtered_ids.append(doc_id)
+        
+        if not filtered_ids:
+            # 해당 과목 문서가 없으면 fallback (전체에서)
+            print(f"[Warning] No documents found for subject: {subject}. Falling back to all docs.")
+            filtered_ids = doc_ids
+    else:
+        filtered_ids = doc_ids
+        
+    if not filtered_ids:
         return []
         
-    selected_ids = random.sample(doc_ids, min(len(doc_ids), k))
+    selected_ids = random.sample(filtered_ids, min(len(filtered_ids), k))
     return [vectorstore.docstore.search(doc_id) for doc_id in selected_ids]
 
 # 5.2 출력 데이터 구조 정의

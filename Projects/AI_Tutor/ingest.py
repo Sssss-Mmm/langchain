@@ -27,15 +27,43 @@ def ingest_data():
     files = [f for f in os.listdir(DATA_DIR) if f.endswith(".pdf")]
     print(f"Found {len(files)} PDF files.")
 
+    # 과목 정의
+    subjects = {
+        "1": "소프트웨어 설계",
+        "2": "소프트웨어 개발",
+        "3": "데이터베이스 구축",
+        "4": "프로그래밍 언어 활용",
+        "5": "정보시스템 구축 관리"
+    }
+    
     for file in files:
         file_path = os.path.join(DATA_DIR, file)
         print(f"Loading {file}...")
         try:
             loader = PyPDFLoader(file_path)
             docs = loader.load()
-            # 메타데이터에 소스 파일명 추가 (기본적으로 있지만 명시적으로 확인)
+            
+            # 과목 추적 로직
+            current_subject = "Unknown"
+            
             for doc in docs:
+                content = doc.page_content
+                # 헤더 감지 (워터마크나 노이즈가 있을 수 있으므로 키워드로 찾음)
+                # 예: "제1과목", "1과목", "소프트웨어 설계" 등
+                if "1과목" in content or "소프트웨어 설계" in content:
+                    current_subject = "1.소프트웨어 설계"
+                elif "2과목" in content or "소프트웨어 개발" in content:
+                    current_subject = "2.소프트웨어 개발"
+                elif "3과목" in content or "데이터베이스" in content:
+                    current_subject = "3.데이터베이스 구축"
+                elif "4과목" in content or "프로그래밍 언어" in content:
+                    current_subject = "4.프로그래밍 언어 활용"
+                elif "5과목" in content or "정보시스템" in content:
+                    current_subject = "5.정보시스템 구축 관리"
+                
                 doc.metadata['source_file'] = file
+                doc.metadata['subject'] = current_subject
+                
             documents.extend(docs)
         except Exception as e:
             print(f"Failed to load {file}: {e}")
