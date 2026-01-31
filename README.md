@@ -43,6 +43,16 @@ LangChain의 그래프 기반 오케스트레이션 도구인 LangGraph를 학�
 ### [Ch08. Fine-tuning for RAG](./Ch08.Fine-tuning%20for%20RAG)
 RAG 성능 향상을 위한 모델 파인튜닝 방법을 다룹니다.
 
+### [Portfolio Project](./Portfolio_Project)
+LangGraph와 Streamlit을 활용한 AI Multi-Agent Dashboard입니다.
+- **Web Search Agent**: 실시간 검색 (DuckDuckGo)
+- **Python Code Interpreter**: 파이썬 코드 실행
+- **YouTube Analyst**: 유튜브 영상 분석 및 요약
+
+### [Projects](./Projects)
+다양한 심화 프로젝트 모음입니다.
+- **AI_Tutor**: RAG 기반의 AI 튜터 애플리케이션 (LangGraph, Streamlit 활용)
+
 ---
 
 ## 🚀 시작하기
