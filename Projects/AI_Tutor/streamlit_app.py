@@ -3,8 +3,9 @@ import os
 from dotenv import load_dotenv
 
 # 환경 변수 로드
+# 시스템 환경 변수(예: ~/.zshrc)가 이미 설정되어 있다면 그것을 우선 사용합니다.
+# .env 파일이 존재할 경우에만 로드합니다 (override=False가 기본값).
 load_dotenv()
-load_dotenv("/home/sssss_mmm/langchain/.env")
 
 # backend imports
 from state import TutorState
