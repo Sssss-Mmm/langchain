@@ -1,0 +1,44 @@
+{
+    "portfolio_name": "샘플 포트폴리오",
+    "created_at": "2026-01-15",
+    "currency": "KRW",
+    "holdings": [
+        {
+            "ticker": "005930.KS",
+            "name": "삼성전자",
+            "quantity": 100,
+            "avg_price": 75000,
+            "sector": "Technology"
+        },
+        {
+            "ticker": "000660.KS",
+            "name": "SK하이닉스",
+            "quantity": 50,
+            "avg_price": 180000,
+            "sector": "Technology"
+        },
+        {
+            "ticker": "035720.KS",
+            "name": "카카오",
+            "quantity": 80,
+            "avg_price": 55000,
+            "sector": "Communication Services"
+        },
+        {
+            "ticker": "005380.KS",
+            "name": "현대자동차",
+            "quantity": 30,
+            "avg_price": 220000,
+            "sector": "Consumer Cyclical"
+        },
+        {
+            "ticker": "068270.KS",
+            "name": "셀트리온",
+            "quantity": 40,
+            "avg_price": 180000,
+            "sector": "Healthcare"
+        }
+    ],
+    "total_invested": 35900000,
+    "notes": "장기 투자 목적의 국내 대형주 위주 포트폴리오"
+}

@@ -1,0 +1,6 @@
+# AI Portfolio Dashboard Requirements
+# Core dependencies are in the main pyproject.toml
+# These are additional dependencies specific to this project
+
+yfinance>=0.2.36
+plotly>=5.18.0
