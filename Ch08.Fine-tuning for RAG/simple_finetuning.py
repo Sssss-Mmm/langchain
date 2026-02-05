@@ -71,7 +71,7 @@ def train():
         gradient_accumulation_steps=1, # 
         logging_steps=10,
         learning_rate=2e-4,
-        max_seq_length=512,
+        max_length=512,
         fp16=True, # GPU 가속 사용
         group_by_length=True,
         packing=False, # True면 여러 문장을 하나로 묶음
@@ -83,12 +83,20 @@ def train():
         model=model,
         train_dataset=dataset,
         peft_config=peft_config,
-        dataset_text_field="text", # 데이터셋에서 텍스트가 들어있는 컬럼명 (guanaco는 'text'임)
-        tokenizer=tokenizer,
+        formatting_func=lambda x: x['text'], # dataset_text_field 대신 사용
+        processing_class=tokenizer,
         args=training_params,
     )
 
+
     print("Starting training...")
+    
+    # [Fix] SFTTrainer가 QLoRA 사용 시 강제로 bf16으로 변환하는 것을 방지하기 위해 fp32로 변환
+    # (fp16=True 설정을 위해 마스터 가중치는 fp32여야 함)
+    for param in trainer.model.parameters():
+        if param.requires_grad:
+            param.data = param.data.to(torch.float32)
+            
     trainer.train()
     
     # 6. 저장

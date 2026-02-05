@@ -92,6 +92,8 @@ for type_name in set(dataset['type']):
 # 리스트 형태에서 다시 Dataset 객체로 변경
 print(type(train_dataset))
 print(type(test_dataset))
+print(train_dataset[0])
+print(test_dataset)
 train_dataset = Dataset.from_list(train_dataset)
 test_dataset = Dataset.from_list(test_dataset)
 print(type(train_dataset))
