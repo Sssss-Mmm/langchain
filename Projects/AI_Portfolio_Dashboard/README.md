@@ -30,7 +30,12 @@
 - **샤프 비율 (Sharpe Ratio)**: 위험조정 수익률을 계산하여 투자 효율성을 평가합니다.
 - **상관관계 분석**: 종목간 상관관계를 분석하여 분산 효과를 평가합니다.
 
-### 4. 💬 자연어 기반 금융 Q&A
+### 4. 📜 금융 약관 분석 (RAG) [NEW]
+- **PDF 문서 처리**: 금융 상품 설명서나 약관 파일을 업로드하여 분석합니다.
+- **정밀 질의응답**: 사용자의 질문에 대해 문서 내용을 근거로 정확하게 답변합니다.
+- **출처 제공**: 답변의 신뢰도를 높이기 위해 참조한 문서의 페이지와 내용을 함께 표시합니다.
+
+### 5. 💬 자연어 기반 금융 Q&A
 AI에게 자연어로 질문하고 전문적인 분석 결과를 받을 수 있습니다:
 - "내 포트폴리오 현재 가치는?"
 - "삼성전자 비중을 조절해야 할까요?"
@@ -67,19 +72,23 @@ graph TB
         PA[포트폴리오 분석가]
         MR[시장 리서처]
         RA[리스크 평가사]
+        TA[약관 분석가]
     end
 
     subgraph Tools["LangChain Tools"]
         Stock[주식 데이터]
         Calc[금융 계산]
         News[뉴스 검색]
+        RAG[문서 검색]
     end
 
     subgraph External["External APIs"]
         YF[yfinance]
         DDG[DuckDuckGo]
         OAI[OpenAI]
+        PDF[PDF 파서]
     end
+
 
     UI --> Agents
     Agents --> Tools
@@ -100,10 +109,10 @@ graph TB
 cd Projects/AI_Portfolio_Dashboard
 
 # uv 사용 시
-uv add yfinance plotly
+uv add yfinance plotly pypdf langchain-chroma sentence-transformers
 
 # pip 사용 시
-pip install yfinance plotly
+pip install yfinance plotly pypdf langchain-chroma sentence-transformers
 ```
 
 ### 3. 환경 변수 설정

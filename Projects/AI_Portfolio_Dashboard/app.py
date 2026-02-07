@@ -16,6 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from agents.portfolio_analyst import get_portfolio_analyst_agent
 from agents.market_researcher import get_market_researcher_agent
 from agents.risk_assessor import get_risk_assessor_agent
+from agents.terms_analyst import get_terms_analyst_chain  # [NEW]
 from utils.visualization import (
     create_portfolio_pie_chart,
     create_sector_bar_chart,
@@ -24,6 +25,7 @@ from utils.visualization import (
     create_correlation_heatmap,
     create_performance_line_chart,
 )
+from utils.document_processor import DocumentProcessor  # [NEW]
 from config.settings import APP_TITLE, APP_ICON
 
 # 환경 변수 로드
@@ -195,8 +197,9 @@ st.markdown("""
 </p>
 """, unsafe_allow_html=True)
 
+
 # 탭 구성
-tab1, tab2, tab3 = st.tabs(["📈 대시보드", "💬 AI 상담", "📋 포트폴리오 상세"])
+tab1, tab2, tab3, tab4 = st.tabs(["📈 대시보드", "💬 AI 상담", "📋 포트폴리오 상세", "📜 약관 분석"])
 
 # ==========================================
 # 탭 1: 대시보드
@@ -425,3 +428,83 @@ with tab3:
         
     else:
         st.warning("포트폴리오 데이터가 없습니다.")
+
+# ==========================================
+# 탭 4: 약관 분석 (RAG)
+# ==========================================
+with tab4:
+    st.subheader("📜 금융 상품 약관/설명서 분석")
+    st.markdown("복잡한 금융 상품 설명서나 약관 파일을 업로드하면, AI가 내용을 분석하여 질문에 답변해드립니다.")
+    
+    # 세션 상태 초기화
+    if "rag_chain" not in st.session_state:
+        st.session_state.rag_chain = None
+    if "processed_files" not in st.session_state:
+        st.session_state.processed_files = []
+
+    # 1. 파일 업로드 섹션
+    uploaded_file = st.file_uploader("PDF 파일 업로드", type=["pdf"], help="분석할 금융 상품 설명서나 약관 PDF 파일을 업로드하세요.")
+    
+    if uploaded_file and (uploaded_file.name not in st.session_state.processed_files):
+        with st.spinner(f"'{uploaded_file.name}' 분석 중... (시간이 조금 걸릴 수 있습니다)"):
+            try:
+                # 문서 처리
+                processor = DocumentProcessor()
+                splits = processor.process_pdf(uploaded_file)
+                
+                if splits:
+                    # 벡터 저장소 생성
+                    vector_store = processor.create_vector_store(splits)
+                    
+                    if vector_store:
+                        # RAG 체인 생성
+                        st.session_state.rag_chain = get_terms_analyst_chain(vector_store)
+                        st.session_state.processed_files.append(uploaded_file.name)
+                        st.success(f"✅ 문서 분석 완료! ({len(splits)}개 청크 생성됨)")
+                    else:
+                        st.error("벡터 저장소 생성 실패")
+                else:
+                    st.warning("문서에서 텍스트를 추출할 수 없습니다.")
+            except Exception as e:
+                st.error(f"오류 발생: {str(e)}")
+
+    # 2. 질의응답 섹션
+    st.markdown("---")
+    
+    if st.session_state.rag_chain:
+        st.info("💡 문서를 기반으로 질문해주세요. 예: '이 상품의 중도해지 이율은?', '원금 보장 되나요?'")
+        
+        # 약관 분석 전용 채팅 히스토리
+        if "terms_messages" not in st.session_state:
+            st.session_state.terms_messages = []
+            
+        for msg in st.session_state.terms_messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+        
+        if prompt := st.chat_input("약관 내용에 대해 질문하세요..."):
+            st.session_state.terms_messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+                
+            with st.chat_message("assistant"):
+                with st.spinner("약관 검색 및 분석 중..."):
+                    try:
+                        response = st.session_state.rag_chain.invoke({"input": prompt})
+                        answer = response["answer"]
+                        
+                        st.markdown(answer)
+                        st.session_state.terms_messages.append({"role": "assistant", "content": answer})
+                        
+                        # 근거 문서 표시 (옵션)
+                        with st.expander("📚 참조한 문서 근거 확인"):
+                            for i, doc in enumerate(response["context"]):
+                                st.markdown(f"**[참조 {i+1}]** (Page {doc.metadata.get('page', '?')})")
+                                st.text(doc.page_content[:300] + "...")
+                                st.markdown("---")
+                                
+                    except Exception as e:
+                        st.error(f"답변 생성 중 오류가 발생했습니다: {str(e)}")
+    else:
+        st.info("👆 먼저 PDF 파일을 업로드해주세요.")
+
