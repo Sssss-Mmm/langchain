@@ -3,8 +3,8 @@ Terms Analyst Agent - 약관 분석 에이전트
 PDF 문서 기반 질의응답 (RAG)
 """
 from langchain_openai import ChatOpenAI
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.vectorstores import VectorStore
 

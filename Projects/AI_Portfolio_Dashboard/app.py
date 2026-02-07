@@ -29,7 +29,20 @@ from utils.document_processor import DocumentProcessor  # [NEW]
 from config.settings import APP_TITLE, APP_ICON
 
 # 환경 변수 로드
+# 환경 변수 로드 (.env가 없으면 시스템 환경 변수 사용)
 load_dotenv()
+
+# API Key 확인 및 안내
+if not os.getenv("OPENAI_API_KEY"):
+    st.error("⚠️ OpenAI API Key를 찾을 수 없습니다.")
+    st.info("""
+    **설정 방법 (다음 중 하나 선택):**
+    1. 터미널에서 `export OPENAI_API_KEY=sk-...` 실행
+    2. `~/.zshrc`에 키를 추가하고, `source ~/.zshrc` 후 앱 재실행
+    3. 프로젝트 폴더에 `.env` 파일 생성 (`OPENAI_API_KEY=sk-...`)
+    """)
+    st.stop()
+
 
 # ==========================================
 # 페이지 설정
@@ -180,11 +193,13 @@ with st.sidebar:
     
     # 대화 초기화
     if st.button("🗑️ 대화 초기화", use_container_width=True):
+        st.cache_resource.clear()  # [NEW] 캐시 초기화로 에이전트 재로드
         st.session_state.messages = []
         st.rerun()
     
     st.markdown("---")
     st.caption("Powered by LangChain & OpenAI GPT-4o")
+    
     st.caption("© 2026 AI Portfolio Analyzer")
 
 # ==========================================
@@ -200,6 +215,9 @@ st.markdown("""
 
 # 탭 구성
 tab1, tab2, tab3, tab4 = st.tabs(["📈 대시보드", "💬 AI 상담", "📋 포트폴리오 상세", "📜 약관 분석"])
+
+# 디버깅: 세션 상태 확인
+# st.write(f"Session State Keys: {list(st.session_state.keys())}")
 
 # ==========================================
 # 탭 1: 대시보드
@@ -324,8 +342,9 @@ with tab2:
     
     for i, example in enumerate(examples.get(agent_type, [])):
         with example_cols[i]:
-            if st.button(example, key=f"example_{i}", use_container_width=True):
+            if st.button(example, key=f"example_{i}"):
                 st.session_state.messages.append({"role": "user", "content": example})
+                st.session_state["processing_prompt"] = example  # [NEW] AI 처리 대기열 등록
                 st.rerun()
     
     st.markdown("---")
@@ -335,14 +354,26 @@ with tab2:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # 사용자 입력
-    if prompt := st.chat_input(f"{agent_type}에게 질문하세요..."):
+    # 사용자 입력 처리 로직
+    prompt = None
+    
+    # 1. 채팅창 입력
+    if chat_input := st.chat_input(f"{agent_type}에게 질문하세요...", key="agent_chat_input"):
+        prompt = chat_input
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
+
+    # 2. 예시 질문 처리 (버튼 클릭으로 넘어온 경우)
+    elif "processing_prompt" in st.session_state and st.session_state["processing_prompt"]:
+        prompt = st.session_state["processing_prompt"]
+        del st.session_state["processing_prompt"]
+    
+    # 질문 처리 및 답변 생성
+    if prompt:
         with st.chat_message("user"):
             st.markdown(prompt)
         
         with st.chat_message("assistant"):
+            st.write("🤔 답변 생성 준비 중...") # [DEBUG]
             with st.status("🤔 AI가 분석 중...", expanded=True) as status:
                 try:
                     # 포트폴리오 컨텍스트 추가
@@ -353,7 +384,19 @@ with tab2:
                     full_prompt = prompt + context
                     
                     # 에이전트 실행
-                    response = agent.invoke({"messages": [("user", full_prompt)]})
+                    st.toast(f"🤖 {agent_type}에게 질문을 전달했습니다...")
+                    
+                    # 디버깅: 입력 메시지 확인
+                    # st.write(f"Input: {full_prompt[:50]}...")
+                    
+                    try:
+                        response = agent.invoke({"messages": [("user", full_prompt)]})
+                        st.toast("✅ 분석 완료! 답변을 생성 중입니다.")
+                    except Exception as invoke_err:
+                        st.error(f"Agent 실행 중 오류: {invoke_err}")
+                        st.write(f"상세 에러: {str(invoke_err)}")
+                        raise invoke_err
+
                     
                     # 도구 사용 시각화
                     for msg in response.get('messages', []):
@@ -412,13 +455,14 @@ with tab3:
                 "평가금": "₩{:,.0f}",
                 "손익": "₩{:,.0f}",
                 "수익률(%)": "{:+.2f}%"
-            }).applymap(
+            }).map(
                 lambda x: 'color: green' if isinstance(x, (int, float)) and x > 0 else 'color: red' if isinstance(x, (int, float)) and x < 0 else '',
                 subset=["손익", "수익률(%)"]
             ),
-            use_container_width=True,
+            # use_container_width=True,  # Warning: 최신 버전 호환성 문제로 제거
             height=400
         )
+
         
         # 포트폴리오 메모
         st.markdown("---")
@@ -482,29 +526,29 @@ with tab4:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
         
-        if prompt := st.chat_input("약관 내용에 대해 질문하세요..."):
-            st.session_state.terms_messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+        # if prompt := st.chat_input("약관 내용에 대해 질문하세요..."):
+        #     st.session_state.terms_messages.append({"role": "user", "content": prompt})
+        #     with st.chat_message("user"):
+        #         st.markdown(prompt)
                 
-            with st.chat_message("assistant"):
-                with st.spinner("약관 검색 및 분석 중..."):
-                    try:
-                        response = st.session_state.rag_chain.invoke({"input": prompt})
-                        answer = response["answer"]
+        #     with st.chat_message("assistant"):
+        #         with st.spinner("약관 검색 및 분석 중..."):
+        #             try:
+        #                 response = st.session_state.rag_chain.invoke({"input": prompt})
+        #                 answer = response["answer"]
                         
-                        st.markdown(answer)
-                        st.session_state.terms_messages.append({"role": "assistant", "content": answer})
+        #                 st.markdown(answer)
+        #                 st.session_state.terms_messages.append({"role": "assistant", "content": answer})
                         
-                        # 근거 문서 표시 (옵션)
-                        with st.expander("📚 참조한 문서 근거 확인"):
-                            for i, doc in enumerate(response["context"]):
-                                st.markdown(f"**[참조 {i+1}]** (Page {doc.metadata.get('page', '?')})")
-                                st.text(doc.page_content[:300] + "...")
-                                st.markdown("---")
+        #                 # 근거 문서 표시 (옵션)
+        #                 with st.expander("📚 참조한 문서 근거 확인"):
+        #                     for i, doc in enumerate(response["context"]):
+        #                         st.markdown(f"**[참조 {i+1}]** (Page {doc.metadata.get('page', '?')})")
+        #                         st.text(doc.page_content[:300] + "...")
+        #                         st.markdown("---")
                                 
-                    except Exception as e:
-                        st.error(f"답변 생성 중 오류가 발생했습니다: {str(e)}")
+        #             except Exception as e:
+        #                 st.error(f"답변 생성 중 오류가 발생했습니다: {str(e)}")
     else:
         st.info("👆 먼저 PDF 파일을 업로드해주세요.")
 

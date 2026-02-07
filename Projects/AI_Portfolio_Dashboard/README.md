@@ -123,6 +123,16 @@ pip install yfinance plotly pypdf langchain-chroma sentence-transformers
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
+**💡 Tip for WSL/Mac/Linux User (zsh/bash):**
+`.env` 파일 대신 시스템 환경 변수를 사용할 수도 있습니다.
+`~/.zshrc` 또는 `~/.bashrc` 파일에 다음 줄을 추가하세요:
+```bash
+export OPENAI_API_KEY=sk-...
+```
+그 후 `source ~/.zshrc`를 실행하거나 새 터미널을 열면 됩니다.
+앱 실행 시 `echo $OPENAI_API_KEY` 명령어로 키가 출력되는지 확인하세요!
+
+
 ### 4. 앱 실행
 
 ```bash
