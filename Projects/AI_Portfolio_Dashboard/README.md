@@ -52,7 +52,8 @@ AI에게 자연어로 질문하고 전문적인 분석 결과를 받을 수 있�
 | **LLM Framework** | LangChain, LangGraph | AI 에이전트 구축 |
 | **LLM Model** | OpenAI GPT-4o | 자연어 처리 |
 | **금융 데이터** | yfinance | 실시간 주가, 재무정보 |
-| **Web Framework** | Streamlit | 대시보드 UI |
+| **Web Framework** | Streamlit, Next.js | 대시보드 UI (Streamlit), 모던 웹 클라이언트 (Next.js) |
+| **Backend API** | FastAPI | RESTful API 서버 |
 | **시각화** | Plotly | 인터랙티브 차트 |
 | **검색** | DuckDuckGo Search | 뉴스 검색 |
 
@@ -62,10 +63,13 @@ AI에게 자연어로 질문하고 전문적인 분석 결과를 받을 수 있�
 
 ```mermaid
 graph TB
-    subgraph UI["Streamlit Dashboard"]
-        Dashboard[대시보드]
-        Chat[AI 상담]
-        Detail[포트폴리오 상세]
+    subgraph Frontend["Frontend Interfaces"]
+        Streamlit[Streamlit Dashboard]
+        NextJS[Next.js Client]
+    end
+
+    subgraph Backend["Backend API"]
+        FastAPI[FastAPI Server]
     end
 
     subgraph Agents["LangGraph Agents"]
@@ -90,7 +94,9 @@ graph TB
     end
 
 
-    UI --> Agents
+    Streamlit --> Agents
+    NextJS --> FastAPI
+    FastAPI --> Agents
     Agents --> Tools
     Tools --> External
 ```
@@ -135,6 +141,8 @@ export OPENAI_API_KEY=sk-...
 
 ### 4. 앱 실행
 
+#### 옵션 A: Streamlit 대시보드 (간편 실행)
+
 ```bash
 # uv 사용 시
 uv run streamlit run app.py
@@ -145,16 +153,54 @@ streamlit run app.py
 
 브라우저에서 `http://localhost:8501`로 접속하면 대시보드를 사용할 수 있습니다.
 
+#### 옵션 B: Full Stack 모드 (FastAPI + Next.js)
+
+**1. 백엔드 서버 실행 (FastAPI)**
+
+```bash
+# uv 사용 시
+uv run uvicorn app.main:app --reload
+
+# 일반 Python 사용 시
+uvicorn app.main:app --reload
+```
+- API 서버: `http://localhost:8000`
+- API 문서 (Swagger): `http://localhost:8000/docs`
+
+**2. 프론트엔드 실행 (Next.js)**
+
+새 터미널을 열고 다음을 실행하세요:
+
+```bash
+cd frontend
+npm install  # 의존성 설치 (최초 1회)
+npm run dev
+```
+
+브라우저에서 `http://localhost:3000`으로 접속하면 Next.js 기반의 모던 UI를 사용할 수 있습니다.
+
 ---
 
 ## 📂 프로젝트 구조
 
-```
 AI_Portfolio_Dashboard/
 ├── app.py                       # Streamlit 메인 앱
 ├── README.md                    # 프로젝트 문서
-├── requirements.txt             # 의존성 목록
+├── requirements.txt             # 파이썬 의존성 목록
 ├── .env.example                 # 환경변수 예시
+│
+├── app/                         # Backend API (FastAPI)
+│   ├── main.py                  # FastAPI 진입점
+│   └── api/                     # API 라우터 (Endpoints)
+│       ├── portfolio.py         # 포트폴리오 분석 API
+│       ├── market.py            # 시장 리서치 API
+│       └── documents.py         # 문서 분석(RAG) API
+│
+├── frontend/                    # Frontend Client (Next.js)
+│   ├── app/                     # Next.js App Router
+│   ├── components/              # React 컴포넌트
+│   ├── services/                # API 통신 모듈
+│   └── package.json             # Node.js 의존성 목록
 │
 ├── config/
 │   ├── __init__.py
